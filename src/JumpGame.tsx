@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import ProgressBar from './ProgressBar'
-import SingleSucess from './singleSuccess'
+import SingleSucess from './SingleSuccess'
 import { useNavigate } from 'react-router-dom'
 const TILE_SIZE = 80//每个格子长度
 const BOX_SIZE = 80//物体长度
 const MAP_LENGTH = 4000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
-
-
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
     let current = 2 // 从第2格开始生成，留出起点
