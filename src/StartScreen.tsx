@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import ForestBackground from './ForestBackground'
 import './StartScreen-Style.css'
 import { useNavigate } from 'react-router-dom'
-
+import {v4 as uuidv4} from 'uuid'
+import axios from 'axios'
 interface Props {
     onStart: () => void
 }
@@ -13,6 +14,7 @@ bgm.volume = 0.5
 bgm.currentTime =0
 
 export default function StartScreen({ onStart }: Props) {
+    
 
     const bgmRef = useRef<HTMLAudioElement | null>(null)
 
@@ -36,14 +38,28 @@ export default function StartScreen({ onStart }: Props) {
         }
     }, [])
 
+    let url='https://jumpcat.owo.cab/api/create-room'
+    const id=uuidv4()
     const navigate=useNavigate()
     const [step, setStep] = useState<'init' | 'choose' | 'join' | 'about'>('init')
     const [roomId, setRoomId] = useState('')
 
     const handleCreateRoom = () => {
-        // TODO: 请求后端创建房间
-        console.log('创建房间')
-        navigate("/singlegame")
+        axios.post(url,{
+            uuid:id
+        })
+        .then((response)=>{
+            const roomid=response.data.room_id
+            console.log(roomid)
+            navigate(`/prepare/${roomid}`)
+        })
+        .catch(err=>{
+            console.log(id)
+            if(err.request){
+                console.log("error")
+            }
+        })
+        
         onStart()
         bgm.pause()
     }
@@ -54,7 +70,7 @@ export default function StartScreen({ onStart }: Props) {
         onStart()
         bgm.pause()
     }
-
+    
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <ForestBackground />

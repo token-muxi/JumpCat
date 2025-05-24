@@ -1,0 +1,42 @@
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 180vh;
+  position: relative;
+  height: 150px;
+  background: linear-gradient(90deg, #cfdfeb 0%, #a7d4eb 50%, #d5e9f7 100%);
+}
+.outer-circle {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid #3477BB;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.inner-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 2px solid #7BB9E0;
+}
+
+.circle img {
+  width: 60%; /* 图片大小相对于圆圈 */
+  height: auto;
+  object-fit: contain;
+}
+.png{
+  position: absolute;
+  width: 300px;        /* 可根据需要调整大小 */
+  height: 250px;
+  z-index: 2;
+left: 50%;
+top: 50%;
+transform: translate(-45%,-50%);
+}

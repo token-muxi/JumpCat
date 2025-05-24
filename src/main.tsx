@@ -1,13 +1,13 @@
-import { StrictMode } from 'react'
+import { StrictMode ,useState} from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import JumpGame from './JumpGame.tsx'
 import StartScreen from "./StartScreen.tsx";
-
+import Prepare from './Prepare.tsx';
 import { BrowserRouter as Router, Routes, Route  } from 'react-router-dom';
 
 const App = () => {
-  // const [started, setStarted] = useState(false)
+  const [started, setStarted] = useState(false)
 
   return (
     <Router>
@@ -15,6 +15,7 @@ const App = () => {
         <Route path='/' element={<StartScreen onStart={() => setStarted(true)}/>}></Route>
         <Route path='/singlegame' element={<JumpGame/>}></Route>
         {/* <Route path='/singleSuccess/:time' element={<SingleSucess />}></Route> */}
+        <Route path='/prepare/:room_id' element={<Prepare/>}></Route>
       </Routes>
     </Router>
   )
