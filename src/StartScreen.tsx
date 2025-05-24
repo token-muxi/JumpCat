@@ -38,7 +38,7 @@ export default function StartScreen({ onStart }: Props) {
         }
     }, [])
 
-    let url='https://jumpcat.owo.cab/api/create-room'
+    const url='https://jumpcat.owo.cab/api/create-room'
     const id=uuidv4()
     const navigate=useNavigate()
     const [step, setStep] = useState<'init' | 'choose' | 'join' | 'about'>('init')
