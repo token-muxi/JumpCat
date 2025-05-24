@@ -58,6 +58,15 @@ export default function StartScreen({ onStart }: Props) {
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <ForestBackground />
+            <img
+                src="/assets/logo.png"
+                alt="Logo"
+                style={{
+                    width: '1000px',       // 你可以调整宽度
+                    marginBottom: '30px', // 离上面和下面的距离
+                    objectFit: 'contain',
+                }}
+            />
             {step === 'init' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <button className="btn" onClick={() => setStep('choose')}>开始游戏</button>
@@ -68,6 +77,7 @@ export default function StartScreen({ onStart }: Props) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <button className="btn" onClick={handleCreateRoom}>创建房间</button>
                     <button className="btn" onClick={() => setStep('join')}>加入房间</button>
+                    <button className="btn" onClick={() => setStep('init')}>返回</button>
                 </div>
             )}
             {step === 'join' && (
@@ -96,10 +106,10 @@ export default function StartScreen({ onStart }: Props) {
                   </p>
                     <p>
                         你将控制一只可爱的猫咪在沙滩跳跃，
-                        避免危险螃蟹，与朋友比拼谁先到达终点，拯救小猫。
+                        避免危险螃蟹，并与朋友比拼谁先到达终点，拯救小猫。
                     </p>
                     <p>
-                        点击“开始游戏”以创建或加入房间。
+                        点击 ｜开始游戏｜ 以创建或加入房间。
                     </p>
                   <button className="btn" onClick={() => setStep('init')}>返回</button>
                 </div>
