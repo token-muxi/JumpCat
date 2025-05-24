@@ -1,4 +1,4 @@
-import { StrictMode,useState } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import JumpGame from './JumpGame.tsx'
@@ -7,7 +7,7 @@ import StartScreen from "./StartScreen.tsx";
 import { BrowserRouter as Router, Routes, Route  } from 'react-router-dom';
 
 const App = () => {
-  const [started, setStarted] = useState(false)
+  // const [started, setStarted] = useState(false)
 
   return (
     <Router>

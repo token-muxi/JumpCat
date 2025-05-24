@@ -3,8 +3,8 @@ import ProgressBar from './ProgressBar'
 import SingleSucess from './SingleSuccess'
 import { useNavigate } from 'react-router-dom'
 const TILE_SIZE = 80//每个格子长度
-const BOX_SIZE = 80//物体长度
-const MAP_LENGTH = 4000//地图总长度
+const BOX_SIZE = 150//物体长度
+const MAP_LENGTH = 1000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
@@ -17,7 +17,7 @@ function generateRedZones(tileCount: number): { start: number; end: number }[] {
         zones.push({ start: current, end: current + length - 1 })
 
         // 至少间隔 1 格，最多间隔 3 格
-        current += length + 2 + Math.floor(Math.random() * 3)
+        current += length + 3 + Math.floor(Math.random() * 4)
     }
 
     return zones
@@ -45,9 +45,28 @@ export default function JumpGame() {
     spikeImg.src = '/assets/spike2.png'
 
     const catImg = new Image()
-    catImg.src = '/assets/cat.png'
+    catImg.src = '/assets/cat00.png'
 
-    const PLATFORM_HEIGHT = 50;//平台高度
+    const catIdleImgs = Array.from({ length: 6 }, (_, i) => {
+        const img = new Image()
+        img.src = `/assets/cat0${i}.png`
+        return img
+    })
+
+    const cat1Img = new Image()
+    cat1Img.src = '/assets/cat1.png'
+
+    const cat2Img = new Image()
+    cat2Img.src = '/assets/cat2.png'
+
+    const PLATFORM_HEIGHT = TILE_SIZE;//平台高度
+
+    // Load goal image
+    const goalImg = new Image()
+    goalImg.src = '/assets/box.png'
+
+    const goalReachedImg = new Image()
+    goalReachedImg.src = '/assets/box1.png'
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -57,6 +76,7 @@ export default function JumpGame() {
         if (!ctx) return
 
         let animationFrameId: number
+        let goalReached = false
 
         const box = {
             x: 0,
@@ -75,8 +95,8 @@ export default function JumpGame() {
         }
 
         const getPlatformUnderBox = () => {
-            const boxLeftTile = Math.floor(box.x / TILE_SIZE)
-            const boxRightTile = Math.floor((box.x + box.width) / TILE_SIZE)
+            const boxLeftTile = Math.floor((box.x+BOX_SIZE*0.2) / TILE_SIZE)
+            const boxRightTile = Math.floor((box.x + box.width -BOX_SIZE*0.3) / TILE_SIZE)
             for (const zone of redZones) {
                 if (boxRightTile >= zone.start && boxLeftTile <= zone.end) {
                     return { color: 'red' }
@@ -96,10 +116,35 @@ export default function JumpGame() {
             let chargeTime = box.isCharging ? Date.now() - box.chargeStart : 0
             chargeTime = Math.min(chargeTime, box.maxCharge)
             const scale = 1 - 1.5 * (chargeTime / box.maxCharge)
-            const h = Math.max(20, box.height * scale)
+            const h = Math.max(BOX_SIZE/3, box.height * scale)
             const offsetY = box.height - h
 
-            ctx.drawImage(catImg, boxFixedX, box.y + offsetY, box.width, h)
+            const shadowWidth = box.width * 0.9
+            const maxShadowHeight = 15
+            const minShadowHeight = 5
+            let shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
+
+            const shadowX = boxFixedX + box.width / 2.2
+            const shadowY = platformBaseY - TILE_SIZE + 10
+
+
+
+            let imgToDraw = catImg // fallback
+
+            if (!box.isJumping  && !box.isBouncingBack) {
+                const index = Math.floor(Date.now() / 150) % 6 // 每150ms切换一帧，共6帧
+                imgToDraw = catIdleImgs[index]
+            } else if (box.isJumping) {
+                imgToDraw = box.y > platformBaseY - TILE_SIZE - BOX_SIZE - 50 ? cat1Img : cat2Img
+                shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
+            }
+
+            ctx.beginPath()
+            ctx.ellipse(shadowX, shadowY, shadowWidth / 2, shadowHeight, 0, 0, Math.PI * 2)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
+            ctx.fill()
+
+            ctx.drawImage(imgToDraw, boxFixedX, box.y + offsetY, box.width, h)
         }
 
         const drawPlatforms = () => {
@@ -119,6 +164,10 @@ export default function JumpGame() {
                 }
             }
 
+            // Draw goal box at the end
+            const goalDrawX = MAP_LENGTH - offsetX
+            const goalImageToUse = goalReached ? goalReachedImg : goalImg
+            ctx.drawImage(goalImageToUse, goalDrawX, platformBaseY - TILE_SIZE - 55, TILE_SIZE * 1.6, TILE_SIZE)
         }
 
         const update = () => {
@@ -128,21 +177,25 @@ export default function JumpGame() {
                 box.vy += box.gravity
                 box.y += box.vy
                 box.x += box.vx
-                box.x=Math.min(box.x,MAP_LENGTH)
-                if(box.x===MAP_LENGTH){
-                    setSucess(true)
+                // Clamp box.x to right boundary
+                if (box.x + box.width >= MAP_LENGTH) {
+                    box.x = MAP_LENGTH - box.width
                 }
-                else{
-                    setBoxX(box.x);
+                setBoxX(box.x);
+
+                if (box.x + box.width >= MAP_LENGTH && box.vx > 0) {
+                    box.vx = 0
+                    goalReached = true
                 }
+
                 if (box.y >= platformBaseY - TILE_SIZE - BOX_SIZE+10) {
                     box.y = platformBaseY - TILE_SIZE - BOX_SIZE+10
                     box.vy = 0
 
                     const currentPlatform = getPlatformUnderBox()
                     if (currentPlatform.color === 'red') {
-                        box.vx = -12
-                        box.vy = -12
+                        box.vx = -15
+                        box.vy = -15
                         box.isBouncingBack = true
                         box.isJumping = true
                     } else {
@@ -154,7 +207,7 @@ export default function JumpGame() {
             }
 
             ctx.fillStyle = '#484037'  // 褐色 SaddleBrown
-            ctx.fillRect(0, platformBaseY-TILE_SIZE/2, canvasWidth, 500)
+            ctx.fillRect(0, platformBaseY-TILE_SIZE/10, canvasWidth, 500)
 
 
             drawPlatforms()
@@ -183,7 +236,7 @@ export default function JumpGame() {
                 chargeTime = Math.min(chargeTime, box.maxCharge)
                 chargeTime = Math.max(chargeTime, box.minCharge)
 
-                const powerRatio = chargeTime / (BOX_SIZE*6)
+                const powerRatio = chargeTime / 400
                 console.log('powerRatio', powerRatio);
                 box.vy = -25 * powerRatio
                 box.vx = 13 * powerRatio
