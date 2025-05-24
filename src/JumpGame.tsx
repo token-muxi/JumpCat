@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import ProgressBar from './ProgressBar'
-import SingleSucess from './SingleSuccess'
-import { useNavigate } from 'react-router-dom'
+// import SingleSucess from './SingleSuccess'
+// import { useNavigate } from 'react-router-dom'
 const TILE_SIZE = 80//每个格子长度
 const CAT_SIZE = 150//物体长度
 const BOX_SIZE = TILE_SIZE*1.6
-const MAP_LENGTH = 4000//地图总长度
+const MAP_LENGTH = 8000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
@@ -17,7 +17,7 @@ function generateRedZones(tileCount: number): { start: number; end: number }[] {
 
         zones.push({ start: current, end: current + length - 1 })
 
-        // 至少间隔 1 格，最多间隔 3 格
+
         current += length + 3 + Math.floor(Math.random() * 4)
     }
 
@@ -35,10 +35,19 @@ const boxFixedX = 1000
 export default function JumpGame() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [boxX, setBoxX] = useState(0)
-    const [success,setSucess]=useState(false)
-    const [finalTime,setFinalTime]=useState<number>(0)
-    const [time,setTime]=useState<number>(0)
-    const timeRef=useRef<number>(0)
+    // const [success,setSucess]=useState(false)
+    // const [finalTime,setFinalTime]=useState<number>(0)
+    // const [time,setTime]=useState<number>(0)
+    // const timeRef=useRef<number>(0)
+    const backgroundImg = new Image()
+    backgroundImg.src = '/assets/sea.png'
+
+    const seaLayers = Array.from({ length: 3 }, (_, i) => {
+        const img = new Image()
+        img.src = `/assets/sea${i + 1}.png`
+        return img
+    })
+
     const grassImg = new Image()
     grassImg.src = '/assets/grass.png'
 
@@ -56,6 +65,12 @@ export default function JumpGame() {
 
     const cat1Img = new Image()
     cat1Img.src = '/assets/cat1.png'
+
+    const cathurt1Img = new Image()
+    cathurt1Img.src = '/assets/cathurt1.png'
+
+    const cathurt2Img = new Image()
+    cathurt2Img.src = '/assets/cathurt2.png'
 
     const cat2Img = new Image()
     cat2Img.src = '/assets/cat2.png'
@@ -105,15 +120,15 @@ export default function JumpGame() {
             }
             return { color: 'green' }
         }
-        const startTimer=()=>{
-            timeRef.current=window.setInterval(()=>{
-                setTime(pre=>pre+100)
-            },100)
-        }
-        const stopTimer=()=>{
-            clearInterval(timeRef.current)
-        }
-        const drawBox = () => {
+        // const startTimer=()=>{
+        //     timeRef.current=window.setInterval(()=>{
+        //         setTime(pre=>pre+100)
+        //     },100)
+        // }
+        // const stopTimer=()=>{
+        //     clearInterval(timeRef.current)
+        // }
+        const drawCat = () => {
             let chargeTime = box.isCharging ? Date.now() - box.chargeStart : 0
             chargeTime = Math.min(chargeTime, box.maxCharge)
             const scale = 1 - 1.5 * (chargeTime / box.maxCharge)
@@ -133,8 +148,11 @@ export default function JumpGame() {
             if (!box.isJumping  && !box.isBouncingBack) {
                 const index = Math.floor(Date.now() / 150) % 6 // 每150ms切换一帧，共6帧
                 imgToDraw = catIdleImgs[index]
-            } else if (box.isJumping) {
-                imgToDraw = box.y > platformBaseY - TILE_SIZE - CAT_SIZE - 50 ? cat1Img : cat2Img
+            } else if (box.isJumping && !box.isBouncingBack) {
+                imgToDraw = box.y > platformBaseY - TILE_SIZE - CAT_SIZE - 70 ? cat1Img : cat2Img
+                shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
+            }else if (box.isJumping && box.isBouncingBack) {
+                imgToDraw = box.y > platformBaseY - TILE_SIZE - CAT_SIZE - 70 ? cathurt1Img : cathurt2Img
                 shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
             }
 
@@ -159,7 +177,7 @@ export default function JumpGame() {
             for (const zone of redZones) {
                 for (let pos = zone.start; pos <= zone.end; pos++) {
                     const tileX = pos * TILE_SIZE - offsetX
-                    ctx.drawImage(spikeImg, tileX, platformBaseY-TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                    ctx.drawImage(spikeImg, tileX, platformBaseY-TILE_SIZE*1.5, TILE_SIZE, TILE_SIZE)
                 }
             }
 
@@ -170,7 +188,6 @@ export default function JumpGame() {
         }
 
         const update = () => {
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
             if (box.isJumping || box.isBouncingBack) {
                 box.vy += box.gravity
@@ -202,12 +219,21 @@ export default function JumpGame() {
                 }
             }
 
-            ctx.fillStyle = '#484037'  // 褐色 SaddleBrown
-            ctx.fillRect(0, platformBaseY-TILE_SIZE/10, canvasWidth, 500)
+            // ctx.fillStyle = '#484037'  // 褐色 SaddleBrown
 
 
+
+            seaLayers.forEach((img, i) => {
+                const speed = 0.1 + i * 0.1 // 每层移动速度不同
+                const scrollX = -box.x * speed % canvasWidth
+
+                ctx.drawImage(img, scrollX, 0, canvasWidth, canvasHeight)
+                ctx.drawImage(img, scrollX + canvasWidth, 0, canvasWidth, canvasHeight)
+            })
+            ctx.drawImage(backgroundImg, 0, 0, canvasWidth, canvasHeight)
             drawPlatforms()
-            drawBox()
+            drawCat()
+
 
             animationFrameId = requestAnimationFrame(update)
         }
@@ -243,25 +269,25 @@ export default function JumpGame() {
         document.addEventListener('keydown', keyDownHandler)
         document.addEventListener('keyup', keyUpHandler)
         update()
-        startTimer()
+        // startTimer()
         return () => {
-            stopTimer()
+            // stopTimer()
             cancelAnimationFrame(animationFrameId)
             document.removeEventListener('keydown', keyDownHandler)
             document.removeEventListener('keyup', keyUpHandler)
         }
     }, [])
-    useEffect(()=>{
-        if(success){
-            setFinalTime(time)
-        }
-    },[success])
+    // useEffect(()=>{
+    //     if(success){
+    //         setFinalTime(time)
+    //     }
+    // },[success])
     return (
         
         <div style={{ width: '100vw', height: '100vh', background: '#dfdb91' }}>
-            {success?<SingleSucess time={finalTime}/>:<div>
+            {/*{success?<SingleSucess time={finalTime}/>:<div>*/}
                 <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={0.5} />
-                <div >{time/1000}</div>
+                {/*<div >{time/1000}</div>*/}
                 <canvas
                     ref={canvasRef}
                     width={canvasWidth}
@@ -269,10 +295,10 @@ export default function JumpGame() {
                     style={{
                         display: 'block',
                         margin: '0 auto',
-                        border: '1px solid #333',
+                        border: 'none',
                     }}
                 />
-            </div>}
+            {/*</div>}*/}
             
         </div>
     )
