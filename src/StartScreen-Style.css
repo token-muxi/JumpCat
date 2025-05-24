@@ -1,0 +1,31 @@
+.btn {
+    font-size: 29px;
+    padding: 20px 80px;
+    background-color: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background-color: #2563eb;
+}
+
+input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+    width: 240px;
+    background-color: #fff;
+    color: #000;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: #3b82f6;
+}
