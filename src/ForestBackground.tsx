@@ -20,10 +20,10 @@ export default function ForestBackground({ offsetY = 0 }: Props) {
 
         const layers = [
             { image: new Image(), speed: 0.5, src: '/forest/b1.png' },
-            { image: new Image(), speed: 2, src: '/forest/b2.png' },
-            { image: new Image(), speed: 4, src: '/forest/b3.png' },
-            { image: new Image(), speed: 7, src: '/forest/b4.png' },
-            { image: new Image(), speed: 15, src: '/forest/b5.png' },
+            { image: new Image(), speed: 0.9, src: '/forest/b2.png' },
+            { image: new Image(), speed: 1.2, src: '/forest/b3.png' },
+            { image: new Image(), speed: 2, src: '/forest/b4.png' },
+            { image: new Image(), speed: 5, src: '/forest/b5.png' },
         ]
 
         const layerX = [0, -40, -30,-500,0]

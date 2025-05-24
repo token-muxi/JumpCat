@@ -9,7 +9,7 @@ const MAP_LENGTH = 8000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
-    let current = 2 // 从第2格开始生成，留出起点
+    let current = 6 // 从第2格开始生成，留出起点
 
     while (current < tileCount - 2) {
         const length = 1 + Math.floor(Math.random() * 3) // 1~3格
@@ -17,8 +17,7 @@ function generateRedZones(tileCount: number): { start: number; end: number }[] {
 
         zones.push({ start: current, end: current + length - 1 })
 
-
-        current += length + 3 + Math.floor(Math.random() * 4)
+        current += length + 2 + Math.floor(Math.random() * 4)
     }
 
     return zones
@@ -30,7 +29,7 @@ const canvasWidth = window.innerWidth;
 const canvasHeight = window.innerHeight;
 const bottomHeight = window.innerHeight*0.2;
 const platformBaseY = canvasHeight - bottomHeight;
-const boxFixedX = 1000
+const boxFixedX = window.innerWidth/3
 
 export default function JumpGame() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -84,12 +83,18 @@ export default function JumpGame() {
     const goalReachedImg = new Image()
     goalReachedImg.src = '/assets/box1.png'
 
+
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
 
         const ctx = canvas.getContext('2d')
         if (!ctx) return
+
+
+        const hurtSound = new Audio('/assets/hurt.mp3')
+        hurtSound.preload = 'auto'
+        hurtSound.volume = 0.8 // 可调节音量
 
         let animationFrameId: number
         let goalReached = false
@@ -101,11 +106,11 @@ export default function JumpGame() {
             height: CAT_SIZE,
             vy: 0,
             vx: 0,
-            gravity: 1.5,
+            gravity: 0.5,
             isJumping: false,
             isCharging: false,
             chargeStart: 0,
-            maxCharge: 500,
+            maxCharge: 400,
             minCharge: 100,
             isBouncingBack: false,
         }
@@ -135,7 +140,7 @@ export default function JumpGame() {
             const h = Math.max(CAT_SIZE/3, box.height * scale)
             const offsetY = box.height - h
 
-            const shadowWidth = box.width - (platformBaseY-box.y)/7
+            const shadowWidth = box.width - (platformBaseY-box.y)/4
             const maxShadowHeight = 15
             const minShadowHeight = 5
             let shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
@@ -181,7 +186,6 @@ export default function JumpGame() {
                 }
             }
 
-            // Draw goal box at the end
             const goalDrawX = MAP_LENGTH - offsetX+BOX_SIZE
             const goalImageToUse = goalReached ? goalReachedImg : goalImg
             ctx.drawImage(goalImageToUse, goalDrawX, platformBaseY - TILE_SIZE - 55, BOX_SIZE, TILE_SIZE)
@@ -193,7 +197,8 @@ export default function JumpGame() {
                 box.vy += box.gravity
                 box.y += box.vy
                 box.x += box.vx
-                setBoxX(box.x);
+
+                setBoxX(box.x)
 
                 if (box.x >= MAP_LENGTH && box.vx > 0) {
                     box.vx = 0
@@ -207,10 +212,12 @@ export default function JumpGame() {
 
                     const currentPlatform = getPlatformUnderBox()
                     if (currentPlatform.color === 'red') {
-                        box.vx = -15
-                        box.vy = -15
+                        box.vx = -8
+                        box.vy = -8
                         box.isBouncingBack = true
                         box.isJumping = true
+                        hurtSound.currentTime = 0
+                        hurtSound.play()
                     } else {
                         box.vx = 0
                         box.isJumping = false
@@ -218,10 +225,6 @@ export default function JumpGame() {
                     }
                 }
             }
-
-            // ctx.fillStyle = '#484037'  // 褐色 SaddleBrown
-
-
 
             seaLayers.forEach((img, i) => {
                 const speed = 0.1 + i * 0.1 // 每层移动速度不同
@@ -260,8 +263,8 @@ export default function JumpGame() {
 
                 const powerRatio = chargeTime / 400
                 console.log('powerRatio', powerRatio);
-                box.vy = -25 * powerRatio
-                box.vx = 13 * powerRatio
+                box.vy = -15 * powerRatio
+                box.vx = 10 * powerRatio
                 box.isJumping = true
             }
         }
