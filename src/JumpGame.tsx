@@ -5,7 +5,7 @@ import SingleSucess from './SingleSuccess'
 const TILE_SIZE = 80//每个格子长度
 const CAT_SIZE = 150//物体长度
 const BOX_SIZE = TILE_SIZE*1.6
-const MAP_LENGTH = 800//地图总长度
+const MAP_LENGTH = 8000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
@@ -31,7 +31,14 @@ const bottomHeight = window.innerHeight*0.2;
 const platformBaseY = canvasHeight - bottomHeight;
 const boxFixedX = window.innerWidth/3
 
+const bgm = new Audio('/assets/wave.mp3')
+bgm.loop = true
+bgm.volume = 1
+bgm.preload = 'auto'
+bgm.currentTime = 0
+
 export default function JumpGame() {
+    bgm.play()
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [boxX, setBoxX] = useState(0)
     const [time, setTime] = useState<number>(0)
@@ -97,8 +104,11 @@ export default function JumpGame() {
         }, 100)
 
         const hurtSound = new Audio('/assets/hurt.mp3')
+        const miaoSound = new Audio('/assets/miao.mp3')
         hurtSound.preload = 'auto'
+        miaoSound.preload = 'auto'
         hurtSound.volume = 0.8 // 可调节音量
+        miaoSound.volume = 0.8
 
         let animationFrameId: number
         let goalReached = false
@@ -187,6 +197,8 @@ export default function JumpGame() {
             ctx.drawImage(goalImageToUse, goalDrawX, platformBaseY - TILE_SIZE - 55, BOX_SIZE, TILE_SIZE)
         }
 
+        let miaoPlayed = false
+
         const update = () => {
 
             if (box.isJumping || box.isBouncingBack) {
@@ -200,7 +212,12 @@ export default function JumpGame() {
                     box.vx = 0
                     goalReached = true
                     box.x = MAP_LENGTH
-                    setSuccess(true)
+                    if (!success && !miaoPlayed) {
+                        setSuccess(true)
+                        miaoSound.currentTime = 0
+                        miaoSound.play()
+                        miaoPlayed = true
+                    }
                     clearInterval(timeRef.current)
                 }
 
