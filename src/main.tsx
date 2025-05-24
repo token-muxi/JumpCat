@@ -1,16 +1,16 @@
-import { StrictMode,useState } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import JumpGame from './JumpGame.tsx'
-import StartScreen from "./StartScreen.tsx";
+// import StartScreen from "./StartScreen.tsx";
 
 const App = () => {
-  const [started, setStarted] = useState(false)
+  // const [started, setStarted] = useState(false)
 
   return (
     <StrictMode>
-      {started ? <JumpGame /> : <StartScreen onStart={() => setStarted(true)} />}
-      {/*<JumpGame />*/}
+      {/*{started ? <JumpGame /> : <StartScreen onStart={() => setStarted(true)} />}*/}
+      <JumpGame />
     </StrictMode>
   )
 }
