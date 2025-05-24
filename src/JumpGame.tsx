@@ -34,10 +34,10 @@ const boxFixedX = window.innerWidth/3
 export default function JumpGame() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [boxX, setBoxX] = useState(0)
-    // const [success,setSucess]=useState(false)
+    const [time, setTime] = useState<number>(0)
+    const timeRef = useRef<number>(0)
+    const [success, setSuccess] = useState(false)
     // const [finalTime,setFinalTime]=useState<number>(0)
-    // const [time,setTime]=useState<number>(0)
-    // const timeRef=useRef<number>(0)
     const backgroundImg = new Image()
     backgroundImg.src = '/assets/sea.png'
 
@@ -91,6 +91,9 @@ export default function JumpGame() {
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
+        timeRef.current = window.setInterval(() => {
+            setTime(t => t + 100)
+        }, 100)
 
         const hurtSound = new Audio('/assets/hurt.mp3')
         hurtSound.preload = 'auto'
@@ -204,6 +207,8 @@ export default function JumpGame() {
                     box.vx = 0
                     goalReached = true
                     box.x = MAP_LENGTH
+                    setSuccess(true)
+                    clearInterval(timeRef.current)
                 }
 
                 if (box.y >= platformBaseY - TILE_SIZE - CAT_SIZE+10) {
@@ -278,6 +283,7 @@ export default function JumpGame() {
             cancelAnimationFrame(animationFrameId)
             document.removeEventListener('keydown', keyDownHandler)
             document.removeEventListener('keyup', keyUpHandler)
+            clearInterval(timeRef.current)
         }
     }, [])
     // useEffect(()=>{
@@ -286,11 +292,24 @@ export default function JumpGame() {
     //     }
     // },[success])
     return (
-        
+
         <div style={{ width: '100vw', height: '100vh', background: '#dfdb91' }}>
             {/*{success?<SingleSucess time={finalTime}/>:<div>*/}
                 <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={0.5} />
-                {/*<div >{time/1000}</div>*/}
+            <div style={{
+                position: 'absolute',
+                top: '80px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#333',
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                padding: '6px 12px',
+                borderRadius: '6px'
+            }}>
+                用时：{(time / 1000).toFixed(1)} 秒
+            </div>
                 <canvas
                     ref={canvasRef}
                     width={canvasWidth}
@@ -301,7 +320,6 @@ export default function JumpGame() {
                         border: 'none',
                     }}
                 />
-            {/*</div>}*/}
             
         </div>
     )
