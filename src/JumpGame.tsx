@@ -17,7 +17,7 @@ function generateRedZones(tileCount: number): { start: number; end: number }[] {
 
         zones.push({ start: current, end: current + length - 1 })
 
-        current += length + 2 + Math.floor(Math.random() * 4)
+        current += length + 2 + Math.floor(Math.random() * 2)
     }
 
     return zones
