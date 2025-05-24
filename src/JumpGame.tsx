@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import ProgressBar from './ProgressBar'
-// import SingleSucess from './SingleSuccess'
+import SingleSucess from './SingleSuccess'
 // import { useNavigate } from 'react-router-dom'
 const TILE_SIZE = 80//每个格子长度
 const CAT_SIZE = 150//物体长度
 const BOX_SIZE = TILE_SIZE*1.6
-const MAP_LENGTH = 8000//地图总长度
+const MAP_LENGTH = 800//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
@@ -38,6 +38,7 @@ export default function JumpGame() {
     const timeRef = useRef<number>(0)
     const [success, setSuccess] = useState(false)
     // const [finalTime,setFinalTime]=useState<number>(0)
+
     const backgroundImg = new Image()
     backgroundImg.src = '/assets/sea.png'
 
@@ -128,14 +129,6 @@ export default function JumpGame() {
             }
             return { color: 'green' }
         }
-        // const startTimer=()=>{
-        //     timeRef.current=window.setInterval(()=>{
-        //         setTime(pre=>pre+100)
-        //     },100)
-        // }
-        // const stopTimer=()=>{
-        //     clearInterval(timeRef.current)
-        // }
         const drawCat = () => {
             let chargeTime = box.isCharging ? Date.now() - box.chargeStart : 0
             chargeTime = Math.min(chargeTime, box.maxCharge)
@@ -277,24 +270,17 @@ export default function JumpGame() {
         document.addEventListener('keydown', keyDownHandler)
         document.addEventListener('keyup', keyUpHandler)
         update()
-        // startTimer()
         return () => {
-            // stopTimer()
             cancelAnimationFrame(animationFrameId)
             document.removeEventListener('keydown', keyDownHandler)
             document.removeEventListener('keyup', keyUpHandler)
             clearInterval(timeRef.current)
         }
     }, [])
-    // useEffect(()=>{
-    //     if(success){
-    //         setFinalTime(time)
-    //     }
-    // },[success])
     return (
 
         <div style={{ width: '100vw', height: '100vh', background: '#dfdb91' }}>
-            {/*{success?<SingleSucess time={finalTime}/>:<div>*/}
+            {success && <SingleSucess time={time} />}
                 <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={0.5} />
             <div style={{
                 position: 'absolute',
