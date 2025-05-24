@@ -34,7 +34,6 @@ const platformBaseY = canvasHeight - bottomHeight;
 const boxFixedX = 100
 
 export default function JumpGame() {
-    const navigate=useNavigate
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [boxX, setBoxX] = useState(0)
     const [success,setSucess]=useState(false)
