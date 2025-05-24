@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import ForestBackground from './ForestBackground'
 import './StartScreen-Style.css'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
     onStart: () => void
 }
 
 export default function StartScreen({ onStart }: Props) {
+    const navigate=useNavigate()
     const [step, setStep] = useState<'init' | 'choose' | 'join'>('init')
     const [roomId, setRoomId] = useState('')
 
     const handleCreateRoom = () => {
         // TODO: 请求后端创建房间
         console.log('创建房间')
+        navigate("/singlegame")
         onStart()
     }
 

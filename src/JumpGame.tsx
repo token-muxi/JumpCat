@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import ProgressBar from './ProgressBar'
-
+import SingleSucess from './SingleSuccess'
+import { useNavigate } from 'react-router-dom'
 const TILE_SIZE = 80//每个格子长度
 const BOX_SIZE = 150//物体长度
 const MAP_LENGTH = 1000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
-
-
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
     let current = 2 // 从第2格开始生成，留出起点
@@ -35,7 +34,10 @@ const boxFixedX = 100
 export default function JumpGame() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [boxX, setBoxX] = useState(0)
-
+    const [success,setSucess]=useState(false)
+    const [finalTime,setFinalTime]=useState<number>(0)
+    const [time,setTime]=useState<number>(0)
+    const timeRef=useRef<number>(0)
     const grassImg = new Image()
     grassImg.src = '/assets/grass.png'
 
@@ -102,9 +104,14 @@ export default function JumpGame() {
             }
             return { color: 'green' }
         }
-
-
-
+        const startTimer=()=>{
+            timeRef.current=window.setInterval(()=>{
+                setTime(pre=>pre+100)
+            },100)
+        }
+        const stopTimer=()=>{
+            clearInterval(timeRef.current)
+        }
         const drawBox = () => {
             let chargeTime = box.isCharging ? Date.now() - box.chargeStart : 0
             chargeTime = Math.min(chargeTime, box.maxCharge)
@@ -240,28 +247,37 @@ export default function JumpGame() {
         document.addEventListener('keydown', keyDownHandler)
         document.addEventListener('keyup', keyUpHandler)
         update()
-
+        startTimer()
         return () => {
+            stopTimer()
             cancelAnimationFrame(animationFrameId)
             document.removeEventListener('keydown', keyDownHandler)
             document.removeEventListener('keyup', keyUpHandler)
         }
     }, [])
-
+    useEffect(()=>{
+        if(success){
+            setFinalTime(time)
+        }
+    },[success])
     return (
+        
         <div style={{ width: '100vw', height: '100vh', background: '#dfdb91' }}>
-            <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={0.5} />
-            <canvas
-
-                ref={canvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
-                style={{
-                    display: 'block',
-                    margin: '0 auto',
-                    border: '1px solid #333',
-                }}
-            />
+            {success?<SingleSucess time={finalTime}/>:<div>
+                <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={0.5} />
+                <div >{time/1000}</div>
+                <canvas
+                    ref={canvasRef}
+                    width={canvasWidth}
+                    height={canvasHeight}
+                    style={{
+                        display: 'block',
+                        margin: '0 auto',
+                        border: '1px solid #333',
+                    }}
+                />
+            </div>}
+            
         </div>
     )
 }

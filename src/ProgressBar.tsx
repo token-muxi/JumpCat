@@ -9,7 +9,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ localProgress, remoteProgress
     return (
         <div style={{
             position: 'absolute',
-            top: 10,
+            top: 20,
             left: 0,
             width: '100%',
             height: 20,
