@@ -3,8 +3,9 @@ import ProgressBar from './ProgressBar'
 import SingleSucess from './SingleSuccess'
 import { useNavigate } from 'react-router-dom'
 const TILE_SIZE = 80//每个格子长度
-const BOX_SIZE = 150//物体长度
-const MAP_LENGTH = 1000//地图总长度
+const CAT_SIZE = 150//物体长度
+const BOX_SIZE = TILE_SIZE*1.6
+const MAP_LENGTH = 4000//地图总长度
 const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
 function generateRedZones(tileCount: number): { start: number; end: number }[] {
     const zones: { start: number; end: number }[] = []
@@ -29,7 +30,7 @@ const canvasWidth = window.innerWidth;
 const canvasHeight = window.innerHeight;
 const bottomHeight = window.innerHeight*0.2;
 const platformBaseY = canvasHeight - bottomHeight;
-const boxFixedX = 100
+const boxFixedX = 1000
 
 export default function JumpGame() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -80,9 +81,9 @@ export default function JumpGame() {
 
         const box = {
             x: 0,
-            y: platformBaseY-TILE_SIZE-BOX_SIZE+10,
-            width: BOX_SIZE,
-            height: BOX_SIZE,
+            y: platformBaseY-TILE_SIZE-CAT_SIZE+10,
+            width: CAT_SIZE,
+            height: CAT_SIZE,
             vy: 0,
             vx: 0,
             gravity: 1.5,
@@ -95,8 +96,8 @@ export default function JumpGame() {
         }
 
         const getPlatformUnderBox = () => {
-            const boxLeftTile = Math.floor((box.x+BOX_SIZE*0.2) / TILE_SIZE)
-            const boxRightTile = Math.floor((box.x + box.width -BOX_SIZE*0.3) / TILE_SIZE)
+            const boxLeftTile = Math.floor((box.x+CAT_SIZE*0.2) / TILE_SIZE)
+            const boxRightTile = Math.floor((box.x + box.width -CAT_SIZE*0.3) / TILE_SIZE)
             for (const zone of redZones) {
                 if (boxRightTile >= zone.start && boxLeftTile <= zone.end) {
                     return { color: 'red' }
@@ -116,10 +117,10 @@ export default function JumpGame() {
             let chargeTime = box.isCharging ? Date.now() - box.chargeStart : 0
             chargeTime = Math.min(chargeTime, box.maxCharge)
             const scale = 1 - 1.5 * (chargeTime / box.maxCharge)
-            const h = Math.max(BOX_SIZE/3, box.height * scale)
+            const h = Math.max(CAT_SIZE/3, box.height * scale)
             const offsetY = box.height - h
 
-            const shadowWidth = box.width * 0.9
+            const shadowWidth = box.width - (platformBaseY-box.y)/7
             const maxShadowHeight = 15
             const minShadowHeight = 5
             let shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
@@ -127,15 +128,13 @@ export default function JumpGame() {
             const shadowX = boxFixedX + box.width / 2.2
             const shadowY = platformBaseY - TILE_SIZE + 10
 
-
-
             let imgToDraw = catImg // fallback
 
             if (!box.isJumping  && !box.isBouncingBack) {
                 const index = Math.floor(Date.now() / 150) % 6 // 每150ms切换一帧，共6帧
                 imgToDraw = catIdleImgs[index]
             } else if (box.isJumping) {
-                imgToDraw = box.y > platformBaseY - TILE_SIZE - BOX_SIZE - 50 ? cat1Img : cat2Img
+                imgToDraw = box.y > platformBaseY - TILE_SIZE - CAT_SIZE - 50 ? cat1Img : cat2Img
                 shadowHeight = Math.max(minShadowHeight, maxShadowHeight - box.y / 15)
             }
 
@@ -165,9 +164,9 @@ export default function JumpGame() {
             }
 
             // Draw goal box at the end
-            const goalDrawX = MAP_LENGTH - offsetX
+            const goalDrawX = MAP_LENGTH - offsetX+BOX_SIZE
             const goalImageToUse = goalReached ? goalReachedImg : goalImg
-            ctx.drawImage(goalImageToUse, goalDrawX, platformBaseY - TILE_SIZE - 55, TILE_SIZE * 1.6, TILE_SIZE)
+            ctx.drawImage(goalImageToUse, goalDrawX, platformBaseY - TILE_SIZE - 55, BOX_SIZE, TILE_SIZE)
         }
 
         const update = () => {
@@ -177,19 +176,16 @@ export default function JumpGame() {
                 box.vy += box.gravity
                 box.y += box.vy
                 box.x += box.vx
-                // Clamp box.x to right boundary
-                if (box.x + box.width >= MAP_LENGTH) {
-                    box.x = MAP_LENGTH - box.width
-                }
                 setBoxX(box.x);
 
-                if (box.x + box.width >= MAP_LENGTH && box.vx > 0) {
+                if (box.x >= MAP_LENGTH && box.vx > 0) {
                     box.vx = 0
                     goalReached = true
+                    box.x = MAP_LENGTH
                 }
 
-                if (box.y >= platformBaseY - TILE_SIZE - BOX_SIZE+10) {
-                    box.y = platformBaseY - TILE_SIZE - BOX_SIZE+10
+                if (box.y >= platformBaseY - TILE_SIZE - CAT_SIZE+10) {
+                    box.y = platformBaseY - TILE_SIZE - CAT_SIZE+10
                     box.vy = 0
 
                     const currentPlatform = getPlatformUnderBox()
