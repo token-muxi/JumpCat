@@ -30,7 +30,7 @@ export default function StartScreen({ onStart }: Props) {
             })
         }
 
-        play()
+        // play()
 
         return () => {
             bgm.pause()

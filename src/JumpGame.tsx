@@ -31,7 +31,7 @@ function generateRandomZones(tileCount: number ) {
     }
     return zones
 }
-let lastZone = generateRandomZones(20)
+let lastZone = generateRandomZones(60)
 let MAP_LENGTH = 4800;
 
 const backgroundImg = new Image()
@@ -135,7 +135,7 @@ export default function JumpGame() {
         hurtSound.preload = 'auto'
         miaoSound.preload = 'auto'
         hurtSound.volume = 0.8 // 可调节音量
-        miaoSound.volume = 0.8
+        miaoSound.volume = 0
 
         let animationFrameId: number
         let goalReached = false
@@ -337,7 +337,7 @@ export default function JumpGame() {
 
         const keyDownHandler = (e: KeyboardEvent) => {
             if (
-                e.code === 'KeyJ' &&
+                e.code === 'Space' &&
                 !box.isJumping &&
                 !box.isCharging &&
                 !box.isBouncingBack
@@ -348,7 +348,7 @@ export default function JumpGame() {
         }
 
         const keyUpHandler = (e: KeyboardEvent) => {
-            if (e.code === 'KeyJ' && box.isCharging && !box.isBouncingBack) {
+            if (e.code === 'Space' && box.isCharging && !box.isBouncingBack) {
                 box.isCharging = false
                 let chargeTime = Date.now() - box.chargeStart
 
@@ -374,6 +374,7 @@ export default function JumpGame() {
             if (ws) {
               ws.close()
             }
+            bgm.pause()
         }
     }, [roomId, uuid])
     return (
