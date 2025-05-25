@@ -43,15 +43,24 @@ export default function StartScreen({ onStart }: Props) {
     const navigate=useNavigate()
     const [step, setStep] = useState<'init' | 'choose' | 'join' | 'about'>('init')
     const [roomId, setRoomId] = useState('')
+    const [createdRoomId, setCreatedRoomId] = useState<number | null>(null)
+
+    const handleSingleRoom = () => {
+        onStart()
+        bgm.pause()
+        navigate('/singlegame/0/0')
+    }
 
     const handleCreateRoom = () => {
+        // navigate(`/prepare/${241619}/32676f8e-b50f-4662-a31e-1b7d8d9979fe`)
         axios.post(url,{
             uuid:id
         })
         .then((response)=>{
-            const roomid=response.data.room_id
+            const roomid = response.data.data.room_id
+            setCreatedRoomId(roomid)
             console.log(roomid)
-            navigate(`/prepare/${roomid}`)
+            navigate(`/prepare/${roomid}/${id}`)
         })
         .catch(err=>{
             console.log(id)
@@ -59,18 +68,26 @@ export default function StartScreen({ onStart }: Props) {
                 console.log("error")
             }
         })
-        
+
         onStart()
         bgm.pause()
     }
 
     const handleJoinRoom = () => {
-        // TODO: 请求后端加入房间
-        console.log('加入房间：' + roomId)
-        onStart()
-        bgm.pause()
+        axios.post('https://jumpcat.owo.cab/api/join-room', {
+            room: Number(roomId),
+            uuid: id
+        })
+        .then(() => {
+            onStart()
+            bgm.pause()
+            navigate(`/prepare/${roomId}/${id}`)
+        })
+        .catch(err => {
+            console.error('加入房间失败:', err)
+        })
     }
-    
+
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <ForestBackground />
@@ -91,6 +108,7 @@ export default function StartScreen({ onStart }: Props) {
             )}
             {step === 'choose' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <button className="btn" onClick={handleSingleRoom}>单人模式</button>
                     <button className="btn" onClick={handleCreateRoom}>创建房间</button>
                     <button className="btn" onClick={() => setStep('join')}>加入房间</button>
                     <button className="btn" onClick={() => setStep('init')}>返回</button>
@@ -102,7 +120,13 @@ export default function StartScreen({ onStart }: Props) {
                         type="text"
                         placeholder="请输入房间号"
                         value={roomId}
-                        onChange={(e) => setRoomId(e.target.value)}
+                        maxLength={6}
+                        pattern="\\d*"
+                        inputMode="numeric"
+                        onInput={(e) => {
+                            const numericValue = e.currentTarget.value.replace(/\D/g, '')
+                            setRoomId(numericValue.slice(0, 6))
+                        }}
                     />
                     <button className="btn" onClick={handleJoinRoom}>确认加入</button>
                     <button className="btn" onClick={() => setStep('choose')}>返回</button>

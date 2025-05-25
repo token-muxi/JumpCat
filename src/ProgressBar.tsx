@@ -30,7 +30,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ localProgress, remoteProgress
                 style={{
                     position: 'absolute',
                     top: '50%',
-                    left: `calc(3% + ${localProgress * 91}%)`,
+                    left: `calc(3% + ${localProgress * 94}%)`,
                     transform: 'translate(-50%, -50%)',
                     width: 40,
                     height: 40,
@@ -41,7 +41,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ localProgress, remoteProgress
                 style={{
                     position: 'absolute',
                     top: '50%',
-                    left: `calc(6% + ${remoteProgress * 91}%)`,
+                    left: `calc(3% + ${remoteProgress * 94}%)`,
                     transform: 'translate(-50%, -50%)',
                     width: 40,
                     height: 40,

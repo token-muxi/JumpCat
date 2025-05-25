@@ -2,28 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import ProgressBar from './ProgressBar'
 import SingleSucess from './SingleSuccess'
 // import { useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import DoubleLose from "./doubleLose.tsx";
 const TILE_SIZE = 80//每个格子长度
 const CAT_SIZE = 150//物体长度
 const BOX_SIZE = TILE_SIZE*1.6
-const MAP_LENGTH = 8000//地图总长度
-const tileCount = Math.floor(MAP_LENGTH / TILE_SIZE)
-function generateRedZones(tileCount: number): { start: number; end: number }[] {
-    const zones: { start: number; end: number }[] = []
-    let current = 6 // 从第2格开始生成，留出起点
-
-    while (current < tileCount - 2) {
-        const length = 1 + Math.floor(Math.random() * 3) // 1~3格
-        if (current + length >= tileCount - 1) break
-
-        zones.push({ start: current, end: current + length - 1 })
-
-        current += length + 2 + Math.floor(Math.random() * 2)
-    }
-
-    return zones
-}
-
-const redZones = generateRedZones(tileCount)
 
 const canvasWidth = window.innerWidth;
 const canvasHeight = window.innerHeight;
@@ -32,67 +15,111 @@ const platformBaseY = canvasHeight - bottomHeight;
 const boxFixedX = window.innerWidth/3
 
 const bgm = new Audio('/assets/wave.mp3')
-bgm.loop = true
 bgm.volume = 1
-bgm.preload = 'auto'
 bgm.currentTime = 0
 
+
+function generateRandomZones(tileCount: number ) {
+    const zones: { start: number; end: number }[] = []
+    let current = 6
+
+    while (current<tileCount-2) {
+        const length = 1+Math.floor(Math.random()*3)
+        if(current + length >= tileCount-1) break
+        zones.push({start:current,end:current+length-1})
+        current += length+2+Math.floor(Math.random()*2)
+    }
+    return zones
+}
+let lastZone = generateRandomZones(20)
+let MAP_LENGTH = 4800;
+
+const backgroundImg = new Image()
+backgroundImg.src = '/assets/sea.png'
+
+const seaLayers = Array.from({ length: 3 }, (_, i) => {
+    const img = new Image()
+    img.src = `/assets/sea${i + 1}.png`
+    return img
+})
+
+const grassImg = new Image()
+grassImg.src = '/assets/grass.png'
+
+const spikeImg = new Image()
+spikeImg.src = '/assets/spike2.png'
+
+const catImg = new Image()
+catImg.src = '/assets/cat00.png'
+
+const catIdleImgs = Array.from({ length: 6 }, (_, i) => {
+    const img = new Image()
+    img.src = `/assets/cat0${i}.png`
+    return img
+})
+
+const cat1Img = new Image()
+cat1Img.src = '/assets/cat1.png'
+
+const cathurt1Img = new Image()
+cathurt1Img.src = '/assets/cathurt1.png'
+
+const cathurt2Img = new Image()
+cathurt2Img.src = '/assets/cathurt2.png'
+
+const cat2Img = new Image()
+cat2Img.src = '/assets/cat2.png'
+
+const PLATFORM_HEIGHT = TILE_SIZE;//平台高度
+
+// Load goal image
+const goalImg = new Image()
+goalImg.src = '/assets/box.png'
+
+const goalReachedImg = new Image()
+goalReachedImg.src = '/assets/box1.png'
+
+async function fetchMapData(roomId: string) {
+  try {
+    const res = await fetch(`https://jumpcat.owo.cab/api/get-room?room=${roomId}`)
+    const data = await res.json()
+    if (data.code === 200 && data.data?.map) {
+      return {
+        length: data.data.map.length,
+        zones: data.data.map.locations
+      }
+    }
+  } catch (err) {
+    console.error('地图加载失败:', err)
+  }
+  return null
+}
 export default function JumpGame() {
-    bgm.play()
+    const { roomId, uuid } = useParams<{ roomId: string; uuid: string }>()
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [boxX, setBoxX] = useState(0)
     const [time, setTime] = useState<number>(0)
     const timeRef = useRef<number>(0)
     const [success, setSuccess] = useState(false)
+    const [remoteProgress, setRemoteProgress] = useState(-1)
+    const [isWin, setIsWin] = useState(false)
+    const [isLose, setIsLose] = useState(false)
+    bgm.play()
     // const [finalTime,setFinalTime]=useState<number>(0)
-
-    const backgroundImg = new Image()
-    backgroundImg.src = '/assets/sea.png'
-
-    const seaLayers = Array.from({ length: 3 }, (_, i) => {
-        const img = new Image()
-        img.src = `/assets/sea${i + 1}.png`
-        return img
-    })
-
-    const grassImg = new Image()
-    grassImg.src = '/assets/grass.png'
-
-    const spikeImg = new Image()
-    spikeImg.src = '/assets/spike2.png'
-
-    const catImg = new Image()
-    catImg.src = '/assets/cat00.png'
-
-    const catIdleImgs = Array.from({ length: 6 }, (_, i) => {
-        const img = new Image()
-        img.src = `/assets/cat0${i}.png`
-        return img
-    })
-
-    const cat1Img = new Image()
-    cat1Img.src = '/assets/cat1.png'
-
-    const cathurt1Img = new Image()
-    cathurt1Img.src = '/assets/cathurt1.png'
-
-    const cathurt2Img = new Image()
-    cathurt2Img.src = '/assets/cathurt2.png'
-
-    const cat2Img = new Image()
-    cat2Img.src = '/assets/cat2.png'
-
-    const PLATFORM_HEIGHT = TILE_SIZE;//平台高度
-
-    // Load goal image
-    const goalImg = new Image()
-    goalImg.src = '/assets/box.png'
-
-    const goalReachedImg = new Image()
-    goalReachedImg.src = '/assets/box1.png'
-
-
     useEffect(() => {
+        if (roomId !== '0' && uuid) {
+          fetchMapData(roomId).then(result => {
+            if (result) {
+              if (result.zones.length > 0) {
+                lastZone = result.zones
+                  MAP_LENGTH = result.length*TILE_SIZE
+              }
+              drawPlatforms()
+              console.log(result)
+            }
+          })
+        }
+
         const canvas = canvasRef.current
         if (!canvas) return
 
@@ -129,10 +156,30 @@ export default function JumpGame() {
             isBouncingBack: false,
         }
 
+        let ws: WebSocket | null = null
+        if (roomId != '0' && uuid) {
+          ws = new WebSocket(`wss://jumpcat.owo.cab/api/game-connect?room=${roomId}&player=${uuid}`)
+          ws.onmessage = (event) => {
+            try {
+              const msg = JSON.parse(event.data)
+              if (msg.location !== undefined) {
+                setRemoteProgress(msg.location)
+                  const localProgress = box.x / MAP_LENGTH
+                  if (msg.location >= 0.99 && localProgress < 1 && !success && !isWin && !isLose) {
+                      setIsLose(true)
+                      if (ws) ws.close()
+                  }
+              }
+            } catch (e) {
+              console.error('Invalid WS message:', event.data)
+            }
+          }
+        }
+
         const getPlatformUnderBox = () => {
             const boxLeftTile = Math.floor((box.x+CAT_SIZE*0.2) / TILE_SIZE)
             const boxRightTile = Math.floor((box.x + box.width -CAT_SIZE*0.3) / TILE_SIZE)
-            for (const zone of redZones) {
+            for (const zone of lastZone) {
                 if (boxRightTile >= zone.start && boxLeftTile <= zone.end) {
                     return { color: 'red' }
                 }
@@ -185,7 +232,7 @@ export default function JumpGame() {
                 ctx.drawImage(grassImg, tileX, platformBaseY-TILE_SIZE, TILE_SIZE, TILE_SIZE)
             }
 
-            for (const zone of redZones) {
+            for (const zone of lastZone) {
                 for (let pos = zone.start; pos <= zone.end; pos++) {
                     const tileX = pos * TILE_SIZE - offsetX
                     ctx.drawImage(spikeImg, tileX, platformBaseY-TILE_SIZE*1.5, TILE_SIZE, TILE_SIZE)
@@ -201,12 +248,17 @@ export default function JumpGame() {
 
         const update = () => {
 
+            if (ws && ws.readyState == WebSocket.OPEN) {
+                ws.send(JSON.stringify({ location: Math.min(1, box.x / MAP_LENGTH) }))
+            }
             if (box.isJumping || box.isBouncingBack) {
                 box.vy += box.gravity
                 box.y += box.vy
                 box.x += box.vx
 
+
                 setBoxX(box.x)
+
 
                 if (box.x >= MAP_LENGTH && box.vx > 0) {
                     box.vx = 0
@@ -214,10 +266,17 @@ export default function JumpGame() {
                     box.x = MAP_LENGTH
                     if (!success && !miaoPlayed) {
                         setSuccess(true)
+                        if (ws && ws.readyState == WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ location: Math.min(1, box.x / MAP_LENGTH) }))
+                        }
+
+                        bgm.pause()
+                        bgm.currentTime=0
                         miaoSound.currentTime = 0
                         miaoSound.play()
                         miaoPlayed = true
                     }
+
                     clearInterval(timeRef.current)
                 }
 
@@ -238,6 +297,26 @@ export default function JumpGame() {
                         box.isJumping = false
                         box.isBouncingBack = false
                     }
+                }
+            }
+
+            if (!success && !isWin && !isLose) {
+                const local = box.x / MAP_LENGTH
+                const remote = remoteProgress
+                if (local >= 1 && remote < 1) {
+                    setIsWin(true)
+                    bgm.pause()
+                    if (ws && ws.readyState == WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ location: Math.min(1, box.x / MAP_LENGTH) }))
+                    }
+                    if (ws) ws.close()
+                } else if (remote >= 0.99 && local < 1) {
+                    setIsLose(true)
+                    bgm.pause()
+                    if (ws && ws.readyState == WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ location: Math.min(1, box.x / MAP_LENGTH) }))
+                    }
+                    if (ws) ws.close()
                 }
             }
 
@@ -292,13 +371,17 @@ export default function JumpGame() {
             document.removeEventListener('keydown', keyDownHandler)
             document.removeEventListener('keyup', keyUpHandler)
             clearInterval(timeRef.current)
+            if (ws) {
+              ws.close()
+            }
         }
-    }, [])
+    }, [roomId, uuid])
     return (
 
         <div style={{ width: '100vw', height: '100vh', background: '#dfdb91' }}>
             {success && <SingleSucess time={time} />}
-                <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={0.5} />
+            {isLose && <DoubleLose />}
+                <ProgressBar localProgress={Math.min(1, boxX / MAP_LENGTH)} remoteProgress={remoteProgress} />
             <div style={{
                 position: 'absolute',
                 top: '80px',
@@ -315,6 +398,7 @@ export default function JumpGame() {
             </div>
                 <canvas
                     ref={canvasRef}
+
                     width={canvasWidth}
                     height={canvasHeight}
                     style={{

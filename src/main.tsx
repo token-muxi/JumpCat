@@ -10,14 +10,14 @@ const App = () => {
   const [started, setStarted] = useState(false)
 
   return (
-    <Router>
-      <Routes>
-        <Route path='/' element={<StartScreen onStart={() => setStarted(true)}/>}></Route>
-        <Route path='/singlegame' element={<JumpGame/>}></Route>
-        {/* <Route path='/singleSuccess/:time' element={<SingleSucess />}></Route> */}
-        <Route path='/prepare/:room_id' element={<Prepare/>}></Route>
-      </Routes>
-    </Router>
+      <Router>
+        <Routes>
+          <Route path='/' element={<StartScreen onStart={() => setStarted(true)}/>}></Route>
+          <Route path='/singlegame/:roomId/:uuid' element={<JumpGame/>}></Route>
+          {/* <Route path='/singleSuccess/:time' element={<SingleSucess />}></Route> */}
+          <Route path='/prepare/:roomId/:uuid' element={<Prepare/>}></Route>
+        </Routes>
+      </Router>
   )
 }
 

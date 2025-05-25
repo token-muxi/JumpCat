@@ -1,32 +1,127 @@
-import React,{useState} from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import './Prepare.css'
-export default function Prepare(){
-    const {room_id}=useParams()
-    return(
-        <div>
-            <div className="center">
-                
-                <div style={{display:'flex',flexDirection:'column'}}>
-                    <img src="/assets/cat01.png" style={{height:'200px',marginRight:'200px',marginBottom:"30px"}}></img>
-                    <button className="btn" style={{height:'50px',width:'100px'}}>准备</button>
-                </div>
-                <div style={{position:'absolute',bottom:'200px',fontSize:'30px'}}>匹配成功</div>
-                <div className="outer-circle">
-                    <div className="inner-circle">
-                        
-                        <img src="/assets/cloud.png" className="png"></img>
-                        
-                        <img src="/assets/box1.png" className="png" style={{height:'150px',width:'200px'}}></img>
-                    </div>
-                </div>
-                <div style={{display:'flex',flexDirection:'column'}}>
-                    <img src="/assets/cat01.png" style={{height:'200px',marginLeft:'200px',marginBottom:"30px"}}></img>
-                    <button className="btn" style={{height:'50px',width:'100px',marginLeft:'200px'}}>准备</button>
-                    
-                </div>
+import axios from 'axios'
+
+export default function PrepareRoom() {
+    const { roomId, uuid } = useParams()
+    const navigate = useNavigate()
+    const [roomData, setRoomData] = useState<any>(null)
+    const [role, setRole] = useState<'p1' | 'p2' | null>(null)
+
+    useEffect(() => {
+        const bgm = new Audio('/assets/choice.wav')
+        bgm.loop = true
+        bgm.volume = 0.5
+        bgm.play().catch(() => {
+          document.addEventListener('click', () => bgm.play(), { once: true })
+        })
+
+        return () => {
+          bgm.pause()
+          bgm.currentTime = 0
+        }
+    }, [])
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            axios.get(`https://jumpcat.owo.cab/api/get-room?room=${roomId}`)
+                .then(res => {
+                    setRoomData(res.data.data)
+
+                    if (res.data.data.p1 === uuid) {
+                        setRole('p1')
+                    } else if (res.data.data.p2 === uuid) {
+                        setRole('p2')
+                    }
+
+                    if (res.data.data.p1_ready && res.data.data.p2_ready) {
+                        clearInterval(interval)
+                        navigate(`/singlegame/${roomId}/${uuid}`)
+                    }
+                })
+                .catch(err => console.error('获取房间失败:', err))
+        }, 2000)
+
+        return () => clearInterval(interval)
+    }, [roomId, navigate])
+
+    const handleReady = () => {
+        if (!role) return
+        axios.post('https://jumpcat.owo.cab/api/update-status', {
+            room: Number(roomId),
+            role
+        })
+            .then(() => {
+                console.log('准备完成')
+            })
+            .catch(err => {
+                console.error('准备失败:', err)
+            })
+    }
+
+    // 用于渲染某一侧玩家的函数
+    const renderPlayer = (playerRole: 'p1' | 'p2') => {
+        if (!roomData) return null
+        const isCurrentUser = role === playerRole
+        const playerId = roomData[playerRole]
+        const readyKey = playerRole + '_ready'
+        const isReady = roomData[readyKey]
+
+        const avatarSrc = playerRole === 'p1' ? '/assets/cat00.png' : '/assets/catuser2.png'
+        const name = isCurrentUser ? '你' : '对手'
+
+        return (
+            <div style={{ width: '50vw', textAlign: 'center' ,userSelect: 'none' }}>
+                <img src={avatarSrc} alt={name} style={{ width: '150px',userSelect: 'none' }} />
+                <p style={{ fontSize: '20px', marginTop: '12px' }}>{name}</p>
+                {isCurrentUser && playerId && roomData.p1 && roomData.p2 && !isReady && (
+                    <button onClick={handleReady} style={{ marginTop: '20px',userSelect:"none" }}>点击准备</button>
+                )}
+                {!isCurrentUser && playerId && (
+                    <p style={{ fontSize: '20px', marginTop: '12px',userSelect:"none"  }}>
+                        {isReady ? '已准备就绪' : '等待准备'}
+                    </p>
+                )}
+                {!playerId && !isCurrentUser && (
+                    <p style={{ fontSize: '20px', marginTop: '12px',userSelect:"none"  }}>等待对手加入...</p>
+                )}
             </div>
-            <div style={{display:'flex',justifyContent:'center',alignItems:'center',marginTop:'100px',fontSize:'30px'}}>房间号：{room_id}</div>
-        </div>
+        )
+    }
+
+    return (
+        <>
+            <div className="room-id-display" style={{
+                position: 'absolute',
+                top: 20,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                color: 'white',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                zIndex: 1000,
+                userSelect: 'text'
+            }}>
+                房间号: {roomId}
+            </div>
+            <div style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: '#222',
+                color: 'white',
+                userSelect:"none"
+            }}>
+                {renderPlayer('p1')}
+                {renderPlayer('p2')}
+            </div>
+        </>
     )
 }
